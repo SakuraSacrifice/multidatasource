@@ -19,6 +19,7 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,7 @@ public class LeeMultiPersistenceConfiguration implements ImportBeanDefinitionReg
             registerDatasource(registry, persistenceName, multiPersistenceProperties.getDataSourceProperties(persistenceName));
             registerSqlSessionFactory(registry, persistenceName, multiPersistenceProperties.getMybatisProperties(persistenceName));
             registerMapperScannerConfigurer(registry, persistenceName, multiPersistenceProperties.getMybatisProperties(persistenceName));
+            registerTransactionManager(registry, persistenceName);
         }
     }
 
@@ -107,6 +109,15 @@ public class LeeMultiPersistenceConfiguration implements ImportBeanDefinitionReg
         beanDefinitionBuilder.addPropertyValue(SQL_SESSION_FACTORY_BEANNAME, BeanNameUtil.getSqlSessionFactoryName(persistenceName));
         beanDefinitionBuilder.addPropertyValue(BASE_PACKAGE, mybatisProperties.getBasePackage());
         registry.registerBeanDefinition(BeanNameUtil.getMapperScannerConfigurerName(persistenceName),
+                beanDefinitionBuilder.getBeanDefinition());
+    }
+
+    private void registerTransactionManager(BeanDefinitionRegistry registry,
+                                            String persistenceName) {
+        BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder
+                .genericBeanDefinition(DataSourceTransactionManager.class);
+        beanDefinitionBuilder.addPropertyReference(DATA_SOURCE, persistenceName);
+        registry.registerBeanDefinition(BeanNameUtil.getTransactionManagerName(persistenceName),
                 beanDefinitionBuilder.getBeanDefinition());
     }
 
